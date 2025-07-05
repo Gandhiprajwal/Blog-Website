@@ -7,6 +7,8 @@ interface AppContextType {
   courses: Course[];
   darkMode: boolean;
   loading: boolean;
+  isAdmin: boolean;
+  isInstructor: boolean;
   addBlog: (blog: Omit<Blog, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateBlog: (id: string, blog: Partial<Blog>) => Promise<void>;
   deleteBlog: (id: string) => Promise<void>;
@@ -32,6 +34,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [courses, setCourses] = useState<Course[]>([]);
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { isAdmin, isInstructor } = useAuth();
 
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
@@ -189,6 +192,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     courses,
     darkMode,
     loading,
+    isAdmin,
+    isInstructor,
     addBlog,
     updateBlog,
     deleteBlog,

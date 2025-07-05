@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Plus, X } from 'lucide-react';
+import { Search, Filter, Plus, X, BookOpen, Sparkles } from 'lucide-react';
 import BlogCard from '../components/BlogCard/BlogCard';
 import RichTextEditor from '../components/RichTextEditor/RichTextEditor';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../components/Auth/AuthProvider';
 import { Blog } from '../lib/supabase';
 
 const Blogs: React.FC = () => {
-  const { blogs, isAdmin, loading, addBlog, updateBlog, deleteBlog } = useApp();
+  const { blogs, loading, addBlog, updateBlog, deleteBlog } = useApp();
+  const { isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -154,29 +156,60 @@ const Blogs: React.FC = () => {
           )}
         </div>
 
-        {/* Blog Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredBlogs.map((blog, index) => (
-            <motion.div
-              key={blog.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <BlogCard
-                blog={blog}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            </motion.div>
-          ))}
-        </div>
+        {/* Blog Grid or Empty State */}
+        {filteredBlogs.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center py-16"
+          >
+            <div className="max-w-md mx-auto">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-yellow-800" />
+                </div>
+              </div>
+              
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {blogs.length === 0 ? 'Coming Soon!' : 'No Results Found'}
+              </h3>
+              
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                {blogs.length === 0 
+                  ? 'We\'re working hard to bring you amazing robotics content. Stay tuned for exciting blog posts about the latest in robotics technology!'
+                  : 'No blog posts match your search criteria. Try adjusting your filters or search terms.'
+                }
+              </p>
 
-        {filteredBlogs.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
-              No blog posts found matching your criteria.
-            </p>
+              {blogs.length === 0 && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                  <p className="text-sm text-orange-800 dark:text-orange-200">
+                    💡 <strong>Coming up:</strong> Tutorials on robot programming, AI integration, sensor fusion, and much more!
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredBlogs.map((blog, index) => (
+              <motion.div
+                key={blog.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <BlogCard
+                  blog={blog}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              </motion.div>
+            ))}
           </div>
         )}
 

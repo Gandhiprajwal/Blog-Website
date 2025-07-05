@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Plus, X } from 'lucide-react';
+import { Search, Filter, Plus, X, GraduationCap, Sparkles } from 'lucide-react';
 import CourseCard from '../components/CourseCard/CourseCard';
 import RichTextEditor from '../components/RichTextEditor/RichTextEditor';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../components/Auth/AuthProvider';
 import { Course } from '../lib/supabase';
 
 const Courses: React.FC = () => {
-  const { courses, isAdmin, loading, addCourse, updateCourse, deleteCourse } = useApp();
+  const { courses, loading, addCourse, updateCourse, deleteCourse } = useApp();
+  const { isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -160,29 +162,60 @@ const Courses: React.FC = () => {
           )}
         </div>
 
-        {/* Course Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredCourses.map((course, index) => (
-            <motion.div
-              key={course.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <CourseCard
-                course={course}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            </motion.div>
-          ))}
-        </div>
+        {/* Course Grid or Empty State */}
+        {filteredCourses.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center py-16"
+          >
+            <div className="max-w-md mx-auto">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <GraduationCap className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-yellow-800" />
+                </div>
+              </div>
+              
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {courses.length === 0 ? 'Coming Soon!' : 'No Results Found'}
+              </h3>
+              
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                {courses.length === 0 
+                  ? 'We\'re developing comprehensive robotics courses for all skill levels. Get ready for hands-on learning experiences!'
+                  : 'No courses match your search criteria. Try adjusting your filters or search terms.'
+                }
+              </p>
 
-        {filteredCourses.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
-              No courses found matching your criteria.
-            </p>
+              {courses.length === 0 && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                  <p className="text-sm text-orange-800 dark:text-orange-200">
+                    🚀 <strong>Coming up:</strong> Beginner to advanced courses covering robot programming, AI integration, hardware design, and more!
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredCourses.map((course, index) => (
+              <motion.div
+                key={course.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <CourseCard
+                  course={course}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              </motion.div>
+            ))}
           </div>
         )}
 

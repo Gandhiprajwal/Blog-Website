@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Users, Star, Edit, Trash2, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useApp } from '../../context/AppContext';
+import { useAuth } from '../Auth/AuthProvider';
 import { Course } from '../../lib/supabase';
 
 interface CourseCardProps {
@@ -12,7 +12,7 @@ interface CourseCardProps {
 }
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete }) => {
-  const { isAdmin } = useApp();
+  const { isAdmin } = useAuth();
 
   const getCategoryColor = (category: string) => {
     switch (category) {

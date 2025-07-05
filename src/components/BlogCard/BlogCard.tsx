@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, User, Eye, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useApp } from '../../context/AppContext';
+import { useAuth } from '../Auth/AuthProvider';
 import { Blog } from '../../lib/supabase';
 
 interface BlogCardProps {
@@ -12,7 +12,7 @@ interface BlogCardProps {
 }
 
 const BlogCard: React.FC<BlogCardProps> = ({ blog, onEdit, onDelete }) => {
-  const { isAdmin } = useApp();
+  const { isAdmin } = useAuth();
 
   return (
     <motion.div

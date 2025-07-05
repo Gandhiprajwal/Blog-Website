@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Settings, ArrowRight, UserPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../components/Auth/AuthProvider';
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +14,7 @@ const Login: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { refreshData } = useApp();
+  const { user, refreshProfile } = useAuth();
 
   // Demo credentials
   const demoCredentials = [
@@ -25,14 +25,10 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        navigate('/');
-      }
-    };
-    checkUser();
-  }, [navigate]);
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,23 +45,38 @@ const Login: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Create or update user profile
-        const { error: profileError } = await supabase
+        // Check if profile exists, if not create one
+        const { data: existingProfile } = await supabase
           .from('user_profiles')
-          .upsert({
-            user_id: data.user.id,
-            email: data.user.email,
-            full_name: data.user.user_metadata?.full_name,
-            role: formData.email === 'admin@robostaan.com' ? 'admin' : 'user'
-          });
+          .select('*')
+          .eq('user_id', data.user.id)
+          .single();
 
-        if (profileError) console.error('Profile error:', profileError);
+        if (!existingProfile) {
+          // Create profile for existing user
+          const role = formData.email === 'admin@robostaan.com' ? 'admin' : 
+                      formData.email === 'instructor@robostaan.com' ? 'instructor' : 'user';
+          
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              user_id: data.user.id,
+              email: data.user.email!,
+              full_name: data.user.user_metadata?.full_name || '',
+              role: role
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+          }
+        }
         
-        await refreshData();
+        await refreshProfile();
         navigate('/');
       }
     } catch (error: any) {
-      setError(error.message);
+      console.error('Login error:', error);
+      setError(error.message || 'An error occurred during login');
     } finally {
       setLoading(false);
     }
@@ -85,11 +96,12 @@ const Login: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
-        await refreshData();
+        await refreshProfile();
         navigate('/');
       }
     } catch (error: any) {
-      setError(error.message);
+      console.error('Demo login error:', error);
+      setError(error.message || 'An error occurred during demo login');
     } finally {
       setLoading(false);
     }
@@ -137,7 +149,7 @@ const Login: React.FC = () => {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
               {error}
             </div>
           )}

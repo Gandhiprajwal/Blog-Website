@@ -34,7 +34,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [courses, setCourses] = useState<Course[]>([]);
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { isAdmin, isInstructor } = useAuth();
+  const { isAdmin, isInstructor, user } = useAuth();
 
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
@@ -64,7 +64,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (blogsError) throw blogsError;
+      if (blogsError) {
+        console.error('Error fetching blogs:', blogsError);
+        setBlogs([]);
+      } else {
+        setBlogs(blogsData || []);
+      }
 
       // Fetch courses
       const { data: coursesData, error: coursesError } = await supabase
@@ -72,12 +77,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (coursesError) throw coursesError;
-
-      setBlogs(blogsData || []);
-      setCourses(coursesData || []);
+      if (coursesError) {
+        console.error('Error fetching courses:', coursesError);
+        setCourses([]);
+      } else {
+        setCourses(coursesData || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
+      setBlogs([]);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
@@ -88,6 +97,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addBlog = async (blog: Omit<Blog, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!user || !isAdmin) {
+      throw new Error('Unauthorized: Only admins can add blogs');
+    }
+
     try {
       const { data, error } = await supabase
         .from('blogs')
@@ -104,6 +117,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateBlog = async (id: string, updatedBlog: Partial<Blog>) => {
+    if (!user || !isAdmin) {
+      throw new Error('Unauthorized: Only admins can update blogs');
+    }
+
     try {
       const { data, error } = await supabase
         .from('blogs')
@@ -121,6 +138,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteBlog = async (id: string) => {
+    if (!user || !isAdmin) {
+      throw new Error('Unauthorized: Only admins can delete blogs');
+    }
+
     try {
       const { error } = await supabase
         .from('blogs')
@@ -136,6 +157,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addCourse = async (course: Omit<Course, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!user || (!isAdmin && !isInstructor)) {
+      throw new Error('Unauthorized: Only admins and instructors can add courses');
+    }
+
     try {
       const { data, error } = await supabase
         .from('courses')
@@ -152,6 +177,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateCourse = async (id: string, updatedCourse: Partial<Course>) => {
+    if (!user || (!isAdmin && !isInstructor)) {
+      throw new Error('Unauthorized: Only admins and instructors can update courses');
+    }
+
     try {
       const { data, error } = await supabase
         .from('courses')
@@ -169,6 +198,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteCourse = async (id: string) => {
+    if (!user || (!isAdmin && !isInstructor)) {
+      throw new Error('Unauthorized: Only admins and instructors can delete courses');
+    }
+
     try {
       const { error } = await supabase
         .from('courses')

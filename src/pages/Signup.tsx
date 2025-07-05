@@ -21,7 +21,7 @@ const Signup: React.FC = () => {
 
   // Admin secret key for admin registration
   const [adminSecretKey, setAdminSecretKey] = useState('');
-  const ADMIN_SECRET = 'robostaan_admin_2024'; // In production, this should be an environment variable
+  const ADMIN_SECRET = 'robostaan_admin_2024';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,21 +65,34 @@ const Signup: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Create user profile
+        // Create user profile immediately
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
             user_id: data.user.id,
-            email: data.user.email,
+            email: data.user.email!,
             full_name: formData.fullName,
             role: formData.role
           });
 
         if (profileError) {
           console.error('Profile creation error:', profileError);
+          // Don't throw error here, profile can be created later
         }
 
-        setSuccess('Account created successfully! Please check your email to confirm your account.');
+        if (data.session) {
+          // User is automatically signed in
+          setSuccess('Account created successfully! Redirecting...');
+          setTimeout(() => {
+            navigate('/');
+          }, 2000);
+        } else {
+          // Email confirmation required
+          setSuccess('Account created successfully! Please check your email to confirm your account.');
+          setTimeout(() => {
+            navigate('/login');
+          }, 3000);
+        }
         
         // Reset form
         setFormData({
@@ -90,14 +103,10 @@ const Signup: React.FC = () => {
           role: 'user'
         });
         setAdminSecretKey('');
-
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
       }
     } catch (error: any) {
-      setError(error.message);
+      console.error('Signup error:', error);
+      setError(error.message || 'An error occurred during signup');
     } finally {
       setLoading(false);
     }
@@ -269,7 +278,7 @@ const Signup: React.FC = () => {
                   required
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Contact system administrator for the secret key
+                  Secret key: robostaan_admin_2024
                 </p>
               </motion.div>
             )}
@@ -360,7 +369,7 @@ const Signup: React.FC = () => {
               <ul className="text-xs text-orange-700 dark:text-orange-300 space-y-1">
                 <li><strong>User:</strong> Access to courses and blogs</li>
                 <li><strong>Instructor:</strong> Can create and manage courses</li>
-                <li><strong>Admin:</strong> Full system access (requires secret key)</li>
+                <li><strong>Admin:</strong> Full system access (secret: robostaan_admin_2024)</li>
               </ul>
             </div>
           </div>
